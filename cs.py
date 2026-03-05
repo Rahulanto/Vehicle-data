@@ -22,7 +22,7 @@ st.markdown("Executive EDA & Machine Learning Forecast")
 @st.cache_data
 def load_data():
    df = pd.read_excel("Vehicle Sales Data (2).xlsx", engine="openpyxl")
-    return df
+   
 df = load_data()
 
 st.success("Dataset Loaded Successfully")
@@ -118,3 +118,4 @@ if "Domestic Sale" in df.columns:
 else:
 
     st.error("Domestic Sale column not found in dataset.")
+
