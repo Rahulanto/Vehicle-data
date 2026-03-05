@@ -16,16 +16,19 @@ st.title("📊 CoverSight - Vehicle Sales Analytics")
 st.markdown("Executive EDA & Machine Learning Forecast")
 
 # ==============================
-# LOAD DATA (Direct Path)
+# LOAD DATA (Cloud Safe)
 # ==============================
 
 @st.cache_data
 def load_data():
-   df = pd.read_excel("Vehicle Sales Data (2).xlsx", engine="openpyxl")
-   
-df = load_data()
+    return pd.read_excel("Vehicle Sales Data (2).xlsx", engine="openpyxl")
 
-st.success("Dataset Loaded Successfully")
+try:
+    df = load_data()
+    st.success("Dataset Loaded Successfully")
+except Exception as e:
+    st.error("Dataset not found. Make sure the Excel file is uploaded to GitHub repository.")
+    st.stop()
 
 # ==============================
 # DATA PREVIEW
@@ -44,17 +47,18 @@ st.header("📊 Exploratory Data Analysis")
 numeric_cols = df.select_dtypes(include=np.number).columns
 
 # 1️⃣ Correlation Heatmap
-st.subheader("1️⃣ Correlation Analysis")
+if len(numeric_cols) > 0:
+    st.subheader("1️⃣ Correlation Analysis")
 
-fig1, ax1 = plt.subplots(figsize=(8,6))
-sns.heatmap(df[numeric_cols].corr(), annot=True, cmap="coolwarm", ax=ax1)
-st.pyplot(fig1)
+    fig1, ax1 = plt.subplots(figsize=(8, 6))
+    sns.heatmap(df[numeric_cols].corr(), annot=True, cmap="coolwarm", ax=ax1)
+    st.pyplot(fig1)
 
-st.markdown("""
-**Business Insight:**  
-Strong positive correlation between Production Qty and Domestic Sale 
-indicates production is aligned with market demand.
-""")
+    st.markdown("""
+    **Business Insight:**  
+    Strong positive correlation between Production Qty and Domestic Sale  
+    indicates production is aligned with market demand.
+    """)
 
 # 2️⃣ Production Trend
 if "Production Qty" in df.columns:
@@ -87,35 +91,38 @@ if "Domestic Sale" in df.columns:
     X = df[numeric_cols].drop("Domestic Sale", axis=1, errors="ignore")
     y = df["Domestic Sale"]
 
-    model = RandomForestRegressor(random_state=42)
-    model.fit(X, y)
+    if len(X.columns) > 0:
 
-    y_pred = model.predict(X)
+        model = RandomForestRegressor(random_state=42)
+        model.fit(X, y)
 
-    r2 = r2_score(y, y_pred)
-    rmse = np.sqrt(mean_squared_error(y, y_pred))
+        y_pred = model.predict(X)
 
-    col1, col2 = st.columns(2)
-    col1.metric("R² Score", round(r2, 3))
-    col2.metric("RMSE", round(rmse, 2))
+        r2 = r2_score(y, y_pred)
+        rmse = np.sqrt(mean_squared_error(y, y_pred))
 
-    st.markdown("""
-**Executive Interpretation:**
-- High R² → Model explains majority of demand variation  
-- Low RMSE → Forecast error is minimal  
-- Can support demand planning & production optimization
-""")
+        col1, col2 = st.columns(2)
+        col1.metric("R² Score", round(r2, 3))
+        col2.metric("RMSE", round(rmse, 2))
 
-    # Actual vs Predicted
-    st.subheader("Actual vs Predicted Sales")
+        st.markdown("""
+        **Executive Interpretation:**
+        - High R² → Model explains majority of demand variation  
+        - Low RMSE → Forecast error is minimal  
+        - Can support demand planning & production optimization
+        """)
 
-    fig4, ax4 = plt.subplots(figsize=(10,5))
-    ax4.plot(y.values, label="Actual")
-    ax4.plot(y_pred, label="Predicted")
-    ax4.legend()
-    st.pyplot(fig4)
+        # Actual vs Predicted
+        st.subheader("Actual vs Predicted Sales")
+
+        fig4, ax4 = plt.subplots(figsize=(10, 5))
+        ax4.plot(y.values, label="Actual")
+        ax4.plot(y_pred, label="Predicted")
+        ax4.legend()
+        st.pyplot(fig4)
+
+    else:
+        st.warning("Not enough numeric features available for ML model.")
 
 else:
-
     st.error("Domestic Sale column not found in dataset.")
-
